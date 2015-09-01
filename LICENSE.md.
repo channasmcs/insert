@@ -1,21 +1,107 @@
-The MIT License (MIT)
 
-Copyright (c) 2015 channasmcs
+html form 
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<form id="contactForm1">
+    <input type="file" name="images" id="images" multiple />
+    <button type="submit">Submit</button>
+</form>
+///////////////////////////////////////////////////////////////////////////////
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+<form action="insert.php" method="post">
+    <input type="text" name="fname"><br><br>
+   <div id="result"></div><br>
+    <input type="submit" value="Submit">
+</form>
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+<script type="text/javascript">
+    $(document).on("submit", "form#contactForm1", function(event)
+    {
+        event.preventDefault();
+        $.ajax({
+            url: "upload.php",
+            type: "POST",
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            success: function (res) {
+//                console.log(res);
+                $('#result').html(res);
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+            }
+        });
+    });
+</script>
+</body>
+</html>
+
+upload.php
+<?php
+//echo '<pre>'.print_r($_FILES,1).'</pre>';
+
+if(isset($_FILES))
+{
+    $file = fopen($_FILES['images']['tmp_name'],"r");
+
+    $i=0;
+    while (($data = fgetcsv($file, 1000, ",")) !== FALSE)
+    {
+        $i++;
+        if($i==1) continue;
+        $csv[$i] = $data;
+    }
+    ?>
+    <select name="select">
+
+        <?php
+        foreach($csv as $key=>$value)
+        {
+            echo ' <option value="'.$value[0].'">'.$value[1].''.$value[2].'</option>';
+        }
+        ?>
+
+    </select>
+<?php
+    fclose($file);
+
+
+}
+
+insert.php
+
+
+<?php
+
+if(!empty($_POST))
+{
+//    echo '<pre>'.print_r($_POST,1).'</pre>';
+    $name=$_POST['select'];
+    $email=$_POST['fname'];
+//    echo '<pre>'.print_r($name,1).'</pre>';
+//    echo '<pre>'.print_r($email,1).'</pre>';
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+
+try {
+    $conn = new PDO("mysql:host=$servername;dbname=test", $username, $password);
+    // set the PDO error mode to exception
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $sql = "INSERT INTO demo (email,name) VALUES ('$email','$name')";
+    $sth = $conn->query($sql);
+    if($sth)
+    {
+        echo 'sucess';
+    }
+}
+catch(PDOException $e)
+{
+    echo "Connection failed: " . $e->getMessage();
+}
+}
+
